@@ -1,8 +1,7 @@
 import React, { useState , useEffect} from 'react';
 import * as tf from '@tensorflow/tfjs';
 
-const labels = ['Cumulus', 'Altocumulus', 'Cirrus', 'Clear Sky', 'Stratocumulus', 'Cumulonimbus']; // Replace with your actual labels
-
+const labels = ['Cumulus', 'Altocumulus', 'Cirrus', 'Clear Sky', 'Stratocumulus', 'Cumulonimbus',"Mixed"]; // Replace with your actual labels
 
 // Simple icon components as fallback
 const IconCloud = () => (
@@ -110,7 +109,7 @@ const WeatherClassification = () => {
 
   const loadModel = async () => {
     try {
-      const model = await tf.loadGraphModel('/tfjs_model/model.json');
+      const model = await tf.loadGraphModel('/tfjs_model_2/model.json');
       console.log('Model loaded:', model);
       setModel(model);
     } catch (error) {
@@ -124,38 +123,36 @@ const WeatherClassification = () => {
 
   const handleSubmit = async () => {
     if (!selectedFile || !model) return;
-
+  
     try {
       const img = new Image();
       img.src = URL.createObjectURL(selectedFile);
       img.onload = async () => {
         const tensor = tf.browser.fromPixels(img)
-          .resizeNearestNeighbor([256, 256]) // Adjust size as needed
+          .resizeNearestNeighbor([252, 252]) // Adjust size as needed
           .toFloat()
-          .expandDims();
+          .expandDims()
+          .div(255.0);
         
         const predictionTensor = model.predict(tensor) as tf.Tensor;
-        console.log('Predictions:', predictionTensor);
-        const predictionArray = predictionTensor.dataSync();
-        console.log('Prediction Array:', predictionArray);
-        const predictionResults = Array.from(predictionArray)
-          .map((value, index) => ({
-            label: labels[index],
-            value: value < 0 ? 0 : value // Set negative values to zero
-          }))
-          .sort((a, b) => b.value - a.value); // Sort by value in descending order
-        
-        // Sum the values
-        const totalValue = predictionResults.reduce((sum, prediction) => sum + prediction.value, 0);
-        
-        // Convert to percentages
-        const predictionResultsWithPercentages = predictionResults.map(prediction => ({
-          label: prediction.label,
-          value: totalValue > 0 ? (prediction.value / totalValue) * 100 : 0 // Normalize to percentage
-        }));
-        
-        console.log('Predictions:', predictionResultsWithPercentages);
-        setPredictions(predictionResultsWithPercentages);
+        const predictionArray = predictionTensor.dataSync() as Float32Array;
+        console.log('Raw array:', predictionArray);
+
+        const softmax = (arr: Float32Array) => {
+          const maxScore = Math.max(...arr);
+          const expScores = arr.map(score => Math.exp(score - maxScore)); // Normalize to prevent overflow
+          const sumExpScores = expScores.reduce((a, b) => a + b, 0);
+          return expScores.map(score => (score / sumExpScores) * 100);
+        };
+
+        const probabilities = softmax(predictionArray);
+        console.log('Prediction probabilities:', probabilities);
+
+        const labeledProbabilities = Array.from(probabilities).map((prob, index) => ({
+          label: labels[index],
+          value: prob
+        })).sort((a, b) => b.value - a.value);
+        setPredictions(labeledProbabilities);
       };
     } catch (error) {
       console.error('Error processing the image:', error);
