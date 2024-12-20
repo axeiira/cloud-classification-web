@@ -1,7 +1,7 @@
 import React, { useState , useEffect} from 'react';
 import * as tf from '@tensorflow/tfjs';
 
-const labels = ['Cumulus', 'Altocumulus', 'Cirrus', 'Clear Sky', 'Stratocumulus', 'Cumulonimbus',"Mixed"]; // Replace with your actual labels
+const labels = ['No Entry', 'No Left', 'No Right', 'No Straight','Roundabout','Speed-limit','Stop']; // Replace with your actual labels
 
 // Simple icon components as fallback
 const IconCloud = () => (
@@ -15,13 +15,6 @@ const IconUpload = () => (
     <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
     <polyline points="17 8 12 3 7 8"/>
     <line x1="12" y1="3" x2="12" y2="15"/>
-  </svg>
-);
-
-const IconUmbrella = () => (
-  <svg xmlns="http://www.w3.org/2000/svg" width="46" height="46" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M22 12a10 10 0 1 0-20 0Z"/>
-    <path d="M12 12v8a2 2 0 0 0 4 0"/>
   </svg>
 );
 
@@ -109,7 +102,7 @@ const WeatherClassification = () => {
 
   const loadModel = async () => {
     try {
-      const model = await tf.loadGraphModel('/tfjs_model_2/model.json');
+      const model = await tf.loadGraphModel('public/road_model-3/model.json');
       console.log('Model loaded:', model);
       setModel(model);
     } catch (error) {
@@ -129,7 +122,7 @@ const WeatherClassification = () => {
       img.src = URL.createObjectURL(selectedFile);
       img.onload = async () => {
         const tensor = tf.browser.fromPixels(img)
-          .resizeNearestNeighbor([252, 252]) // Adjust size as needed
+          .resizeNearestNeighbor([180, 180]) // Adjust size as needed
           .toFloat()
           .expandDims()
           .div(255.0);
@@ -165,28 +158,25 @@ const WeatherClassification = () => {
         {/* Header Section */}
         <div className="text-center space-y-4">
           <div className="flex items-center justify-center gap-3">
-            <div className="h-12 w-12 text-cyan-500">
+            {/* <div className="h-12 w-12 text-cyan-500">
               <IconUmbrella />
-            </div>
+            </div> */}
             <h1 className="text-4xl font-bold bg-gradient-to-r from-cyan-500 to-blue-400 bg-clip-text text-transparent">
-              CloudAI
+              Traffic Signs Classification
             </h1>
           </div>
           <p className="text-lg text-gray-600">
-            Intelligent Cloud Classification at Your Fingertips
+            Labels : 'No Entry', 'No Left', 'No Right', 'No Straight','Roundabout','Speed-limit','Stop'
           </p>
         </div>
 
         <div className="bg-white rounded-lg border-2 border-cyan-100 shadow-lg overflow-hidden">
           <div className="bg-gradient-to-r from-cyan-50 to-sky-50 p-6">
             <div className="flex items-center gap-2 text-2xl font-semibold text-gray-800">
-              <div className="h-8 w-8 text-cyan-500">
-                <IconCloud />
-              </div>
-              Cloud Analysis
+              Traffic Signs Analysis
             </div>
             <p className="text-gray-600 text-lg mt-2">
-              Upload your cloud image and let <span className='font-bold bg-gradient-to-r from-cyan-500 to-blue-400 bg-clip-text text-transparent'>CloudAI</span> do the magic
+              Upload your traffic sign image to classify the traffic sign.
             </p>
           </div>
           
@@ -256,7 +246,7 @@ const WeatherClassification = () => {
                     onClick={handleSubmit}
                     className="mt-4 px-6 py-2 bg-cyan-500 text-white rounded-lg hover:bg-cyan-600 transition-colors duration-300"
                   >
-                    Analyze Cloud
+                    Analyze
                   </button>
                 </div>
               )}
@@ -303,7 +293,7 @@ const WeatherClassification = () => {
 
         {/* Footer */}
         <div className="text-center text-gray-500 text-sm">
-          © 2024 CloudAI - Advanced Cloud Classification System
+          © 2024 - Deep Learning For Multimedia
         </div>
       </div>
     </div>
